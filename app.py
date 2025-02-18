@@ -1,112 +1,119 @@
 import streamlit as st
 import pandas as pd
+import requests
 
-# Dades inicials dels intents
+# Dades inicials
 data = [
     {"Data": "08-02-2025", "Nom": "Pa rodó de mig", "Farina": "50% espelta, 50% blat", "Aigua": 325, "Sal": 10, "Massa Mare": 30, 
-     "Fermentació freda": "24h", "Resultat": "Pa molt pla, sense volum"},
+     "Fermentació freda": "24h", "Resultat": "Pa molt pla, sense volum", "Puntuació": 2},
     
     {"Data": "10-02-2025", "Nom": "Pa amb olives", "Farina": "50% espelta, 50% blat", "Aigua": 162.5, "Sal": 5, "Massa Mare": 15, 
-     "Fermentació freda": "24h", "Resultat": "Pa molt pla de nou"},
-
-    {"Data": "10-02-2025", "Nom": "Pa de 125 g", "Farina": "50% espelta, 50% blat", "Aigua": 80, "Sal": 2, "Massa Mare": 10, 
-     "Fermentació freda": "8-12h", "Resultat": "Molla desigual, creixement insuficient"},
-
-    {"Data": "11-02-2025", "Nom": "Pa de 250 g", "Farina": "50% espelta, 50% blat", "Aigua": 80, "Sal": 2, "Massa Mare": 10, 
-     "Fermentació freda": "4h", "Resultat": "Massa sobrefermentada, molla densa"},
-
-    {"Data": "14-02-2025", "Nom": "Pa rodó de mig", "Farina": "50% espelta, 50% blat", "Aigua": 145, "Sal": 4, "Massa Mare": 20, 
-     "Fermentació freda": "23h", "Resultat": "Creixement lleuger, molla densa"},
-
-    {"Data": "15-02-2025", "Nom": "Pa de 500 g", "Farina": "50% espelta, 50% blat", "Aigua": 145, "Sal": 4, "Massa Mare": 20, 
-     "Fermentació freda": "23h", "Resultat": "Molla densa, forats grans irregulars"},
-
-    {"Data": "15-02-2025", "Nom": "Pa de 500 g + Antònia", "Farina": "50% espelta, 50% blat", "Aigua": 170, "Sal": 4, "Massa Mare": "3 cullerades", 
-     "Fermentació freda": "En procés", "Resultat": "En observació"},
+     "Fermentació freda": "24h", "Resultat": "Pa molt pla de nou", "Puntuació": 1},
 
     {"Data": "17-02-2025", "Nom": "Pa de Massa Mare (ABC News)", "Farina": "175 g panificable, 25 g integral", "Aigua": 150, "Sal": 4, "Massa Mare": 22.5, 
-     "Fermentació freda": "Banc de cuina 12h, nevera mentre s'escalfa el forn", "Resultat": "Bona expansió, molla densa"},
+     "Fermentació freda": "12h a temperatura ambient, després nevera", "Resultat": "Bona expansió, molla esponjosa", "Puntuació": 5},
 ]
 
-# Inicialitzar el DataFrame a la sessió si no existeix
-if "df" not in st.session_state:
-    st.session_state.df = pd.DataFrame(data)
+# Convertir en DataFrame
+df = pd.DataFrame(data)
 
-st.title("🥖 Dietari de Pa")
+# Configuració Streamlit
+st.set_page_config(page_title="Dietari de Pa", layout="centered")
+st.title("🍞 Dietari de Pa")
 
-# Mostrar el DataFrame
-st.subheader("📜 Entrades Anteriors")
-st.dataframe(st.session_state.df)
+# Mostrar intents
+st.subheader("📜 Llistat d'intents de pa")
+for index, row in df.iterrows():
+    with st.expander(f"**{row['Nom']}** - {row['Data']}"):
+        st.write(f"**Farina:** {row['Farina']}")
+        st.write(f"**Aigua:** {row['Aigua']} ml")
+        st.write(f"**Sal:** {row['Sal']} g")
+        st.write(f"**Massa Mare:** {row['Massa Mare']} g")
+        st.write(f"**Fermentació freda:** {row['Fermentació freda']}")
+        st.write(f"**Resultat:** {row['Resultat']}")
 
-# Afegir una nova entrada
-st.subheader("➕ Nova Entrada")
+        # Puntuació amb estrelles
+        rating = "⭐" * row["Puntuació"] + "☆" * (5 - row["Puntuació"])
+        st.write(f"**Puntuació:** {rating}")
 
-col1, col2 = st.columns(2)
+# 🔹 Millor intent de pa
+st.subheader("🏆 Millor intent de pa")
 
-with col1:
-    data = st.date_input("Data de l'intent")
-    nom = st.text_input("Nom del pa")
-    farina = st.text_input("Tipus de farina")
-    aigua = st.number_input("Aigua (g)", min_value=0)
+best_attempt = df.loc[df["Puntuació"].idxmax()]
+st.write(f"🥇 **{best_attempt['Nom']}** ({best_attempt['Data']}) amb una puntuació de {best_attempt['Puntuació']} estrelles.")
+st.write(f"🔹 **Resultat:** {best_attempt['Resultat']}")
+st.write(f"🔹 **Fermentació:** {best_attempt['Fermentació freda']}")
 
-with col2:
-    sal = st.number_input("Sal (g)", min_value=0)
-    massa_mare = st.text_input("Massa mare (g o cullerades)")
-    fermentacio = st.text_input("Fermentació freda")
-    resultat = st.text_area("Resultat de l'intent")
+# 🆕 Formulari per afegir un nou intent
+st.subheader("➕ Afegir nou intent")
 
-if st.button("💾 Guardar"):
-    if nom and farina and fermentacio and resultat:
-        new_entry = pd.DataFrame([{
-            "Data": data.strftime("%d-%m-%Y"),
-            "Nom": nom,
-            "Farina": farina,
-            "Aigua": aigua,
-            "Sal": sal,
-            "Massa Mare": massa_mare,
-            "Fermentació freda": fermentacio,
-            "Resultat": resultat
-        }])
-        
-        st.session_state.df = pd.concat([st.session_state.df, new_entry], ignore_index=True)
-        st.success("Entrada afegida correctament!")
-        st.experimental_rerun()
-    else:
-        st.error("Si us plau, omple tots els camps.")
+nom = st.text_input("Nom del pa")
+data = st.date_input("Data")
+farina = st.text_input("Tipus de farina")
+aigua = st.number_input("Quantitat d’aigua (ml)", min_value=0)
+sal = st.number_input("Quantitat de sal (g)", min_value=0)
+massa_mare = st.text_input("Quantitat de massa mare")
+fermentacio = st.text_input("Temps de fermentació")
+resultat = st.text_area("Resultat")
+puntuacio = st.slider("Puntuació", 1, 5, 3)
 
-# Editar entrades
-st.subheader("✏️ Editar Entrada")
+if st.button("Guardar intent"):
+    new_entry = {
+        "Data": str(data),
+        "Nom": nom,
+        "Farina": farina,
+        "Aigua": aigua,
+        "Sal": sal,
+        "Massa Mare": massa_mare,
+        "Fermentació freda": fermentacio,
+        "Resultat": resultat,
+        "Puntuació": puntuacio
+    }
+    df = df.append(new_entry, ignore_index=True)
+    st.success("Nou intent afegit!")
 
-options = st.session_state.df["Nom"].tolist()
-entry_to_edit = st.selectbox("Selecciona una entrada a editar", options)
+# 🔹 Editar intents anteriors
+st.subheader("✏️ Editar intent existent")
+entry_to_edit = st.selectbox("Selecciona l'intent a editar", df["Nom"].unique())
 
 if entry_to_edit:
-    entry_data = st.session_state.df[st.session_state.df["Nom"] == entry_to_edit].iloc[0]
+    idx = df[df["Nom"] == entry_to_edit].index[0]
+    new_puntuacio = st.slider("Actualitza la puntuació", 1, 5, df.at[idx, "Puntuació"])
+    new_resultat = st.text_area("Actualitza el resultat", df.at[idx, "Resultat"])
 
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        new_data = st.date_input("Data", pd.to_datetime(entry_data["Data"], format="%d-%m-%Y"))
-        new_nom = st.text_input("Nom del pa", entry_data["Nom"])
-        new_farina = st.text_input("Tipus de farina", entry_data["Farina"])
-        new_aigua = st.number_input("Aigua (g)", min_value=0, value=int(entry_data["Aigua"]))
+    if st.button("Guardar canvis"):
+        df.at[idx, "Puntuació"] = new_puntuacio
+        df.at[idx, "Resultat"] = new_resultat
+        st.success(f"Intent '{entry_to_edit}' actualitzat!")
 
-    with col2:
-        new_sal = st.number_input("Sal (g)", min_value=0, value=int(entry_data["Sal"]))
-        new_massa_mare = st.text_input("Massa mare", entry_data["Massa Mare"])
-        new_fermentacio = st.text_input("Fermentació freda", entry_data["Fermentació freda"])
-        new_resultat = st.text_area("Resultat", entry_data["Resultat"])
+# Mostrar la taula de dades
+st.subheader("📊 Resum dels intents")
+st.dataframe(df)
 
-    if st.button("💾 Guardar canvis"):
-        index = st.session_state.df.index[st.session_state.df["Nom"] == entry_to_edit].tolist()[0]
-        st.session_state.df.at[index, "Data"] = new_data.strftime("%d-%m-%Y")
-        st.session_state.df.at[index, "Nom"] = new_nom
-        st.session_state.df.at[index, "Farina"] = new_farina
-        st.session_state.df.at[index, "Aigua"] = new_aigua
-        st.session_state.df.at[index, "Sal"] = new_sal
-        st.session_state.df.at[index, "Massa Mare"] = new_massa_mare
-        st.session_state.df.at[index, "Fermentació freda"] = new_fermentacio
-        st.session_state.df.at[index, "Resultat"] = new_resultat
+# 🔹 Recomanacions basades en IA (simulació)
+st.subheader("🤖 Recomanacions de millora")
 
-        st.success("Entrada actualitzada correctament!")
-        st.experimental_rerun()
+# Preparar els intents en format text per enviar a la IA
+intents_text = "\n".join(
+    [f"{row['Nom']} ({row['Data']}): {row['Resultat']} - Puntuació: {row['Puntuació']}" for _, row in df.iterrows()]
+)
+
+# Simulació d'una API d'IA
+st.write("🔍 Analitzant resultats amb IA...")
+
+# Exemple de crida a una API d'IA real (comentada perquè no tenim una API real)
+"""
+response = requests.post("https://api.example.com/recomanacions",
+                         json={"dades": intents_text})
+recomanacions = response.json().get("recomanacions", "No s'han rebut recomanacions.")
+"""
+
+# Simulació de resposta de la IA
+recomanacions = """
+1️⃣ Reduir la quantitat d’aigua en pans amb molla densa.  
+2️⃣ Fer una fermentació més curta per evitar sobrefermentació.  
+3️⃣ Augmentar el temps d'autòlisi per millorar la textura.  
+4️⃣ Fer servir una massa mare més activa per millorar l'expansió.
+"""
+
+st.write(recomanacions)
