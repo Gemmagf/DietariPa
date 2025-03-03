@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import requests
 
+
 # Dades inicials
 data = [
     {"Data": "08-02-2025", "Nom": "Pa rodó de mig", "Farina": "50% espelta, 50% blat", "Aigua": 325, "Sal": 10, "Massa Mare": 30, 
