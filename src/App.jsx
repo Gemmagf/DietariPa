@@ -16,6 +16,7 @@ const App = () => {
   useEffect(() => {
     const storedUsers = getStorage('breadUsers', []);
     setUsers(storedUsers);
+
     const storedSelectedUserId = getStorage('selectedBreadUserId', null);
     if (storedSelectedUserId) {
       const user = storedUsers.find(u => u.id === storedSelectedUserId);
@@ -68,49 +69,75 @@ const App = () => {
   };
 
   const handleEditAttempt = (id, newScore) => {
-    setAttempts(attempts.map(attempt =>
-      attempt.id === id ? { ...attempt, score: newScore } : attempt
-    ));
+    setAttempts(
+      attempts.map(attempt =>
+        attempt.id === id ? { ...attempt, score: newScore } : attempt
+      )
+    );
   };
 
-  const bestAttempt = attempts.length > 0
-    ? attempts.reduce((prev, current) => (prev.score > current.score ? prev : current))
-    : null;
+  const handleBackToUserSelection = () => {
+    setSelectedUser(null);
+    setCurrentPage('userSelection');
+  };
 
-  const lastAttempt = attempts.length > 0
-    ? attempts.reduce((prev, current) => (new Date(prev.date) > new Date(current.date) ? prev : current))
-    : null;
+  const bestAttempt =
+    attempts.length > 0
+      ? attempts.reduce((prev, current) =>
+          prev.score > current.score ? prev : current
+        )
+      : null;
+
+  const lastAttempt =
+    attempts.length > 0
+      ? attempts.reduce((prev, current) =>
+          new Date(prev.date) > new Date(current.date) ? prev : current
+        )
+      : null;
 
   return (
-    <div className="min-h-screen bg-gray-100 font-sans antialiased">
-      {!selectedUser && (
-        <BreadUserSelector
-          users={users}
-          selectedUser={selectedUser}
-          onSelectUser={handleSelectUser}
-          onAddUser={handleAddUser}
-        />
-      )}
+    <div className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-100 to-yellow-100 font-sans antialiased flex flex-col items-center justify-start p-6">
+      <div className="w-full max-w-3xl bg-white rounded-xl shadow-lg p-6">
+        {!selectedUser && (
+          <BreadUserSelector
+            users={users}
+            selectedUser={selectedUser}
+            onSelectUser={handleSelectUser}
+            onAddUser={handleAddUser}
+          />
+        )}
 
-      {selectedUser && (
-        <>
-          <BreadHeader currentPage={currentPage} setCurrentPage={setCurrentPage} />
-          <main className="container mx-auto p-4">
-            {currentPage === 'addAttempt' && (
-              <BreadAddAttemptForm onAddAttempt={handleAddAttempt} />
-            )}
-            {currentPage === 'viewAttempts' && (
-              <BreadViewAttempts attempts={attempts} onEditAttempt={handleEditAttempt} />
-            )}
-            {currentPage === 'summary' && (
-              <>
-                <BreadSummaryTable attempts={attempts} />
-                <BreadAIRecommendations bestAttempt={bestAttempt} lastAttempt={lastAttempt} />
-              </>
-            )}
-          </main>
-        </>
-      )}
+        {selectedUser && (
+          <>
+            <div className="flex justify-between items-center mb-4">
+              <BreadHeader currentPage={currentPage} setCurrentPage={setCurrentPage} />
+              <button
+                onClick={handleBackToUserSelection}
+                className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition"
+              >
+                Canviar Usuari
+              </button>
+            </div>
+
+            <main className="min-h-[60vh]">
+              {currentPage === 'addAttempt' && (
+                <BreadAddAttemptForm onAddAttempt={handleAddAttempt} />
+              )}
+
+              {currentPage === 'viewAttempts' && (
+                <BreadViewAttempts attempts={attempts} onEditAttempt={handleEditAttempt} />
+              )}
+
+              {currentPage === 'summary' && (
+                <>
+                  <BreadSummaryTable attempts={attempts} />
+                  <BreadAIRecommendations bestAttempt={bestAttempt} lastAttempt={lastAttempt} />
+                </>
+              )}
+            </main>
+          </>
+        )}
+      </div>
     </div>
   );
 };
