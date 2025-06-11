@@ -9,15 +9,15 @@ import { supabase } from './supabaseClient';
 
 const App = () => {
   const [currentPage, setCurrentPage] = useState('userSelection');
-  const [attempts, setAttempts] = useState([]);
-  const [users, setUsers] = useState([]); // array of strings (user names)
+  const [users, setUsers] = useState([]); // array of user_name strings
   const [selectedUser, setSelectedUser] = useState(null);
+  const [attempts, setAttempts] = useState([]);
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [loadingAttempts, setLoadingAttempts] = useState(false);
 
-  // Fetch distinct user_names from bread_attempts
+  // 1. Carregar usuaris únics de Supabase
   useEffect(() => {
-    const fetchUsers = async () => {
+    async function fetchUsers() {
       setLoadingUsers(true);
       const { data, error } = await supabase
         .from('bread_attempts')
@@ -28,11 +28,10 @@ const App = () => {
         console.error('Error fetching users:', error);
         setUsers([]);
       } else {
-        // Extract unique user names
-        const uniqueUsers = [...new Set(data.map(a => a.user_name))];
+        const uniqueUsers = [...new Set(data.map(item => item.user_name))];
         setUsers(uniqueUsers);
 
-        // Load selected user from localStorage
+        // Si tenim usuari guardat a localStorage i existeix, seleccionar-lo
         const storedUser = localStorage.getItem('selectedBreadUserName');
         if (storedUser && uniqueUsers.includes(storedUser)) {
           setSelectedUser(storedUser);
@@ -40,11 +39,11 @@ const App = () => {
         }
       }
       setLoadingUsers(false);
-    };
+    }
     fetchUsers();
   }, []);
 
-  // Fetch attempts for selected user_name
+  // 2. Carregar intents per usuari seleccionat
   useEffect(() => {
     if (!selectedUser) {
       setAttempts([]);
@@ -52,7 +51,7 @@ const App = () => {
       return;
     }
 
-    const fetchAttempts = async () => {
+    async function fetchAttempts() {
       setLoadingAttempts(true);
       const { data, error } = await supabase
         .from('bread_attempts')
@@ -68,12 +67,11 @@ const App = () => {
         localStorage.setItem('selectedBreadUserName', selectedUser);
       }
       setLoadingAttempts(false);
-    };
-
+    }
     fetchAttempts();
   }, [selectedUser]);
 
-  // Add new user by just setting the selectedUser (no users table)
+  // Afegir usuari (simplement afegim el nom i el seleccionem)
   const handleAddUser = (userName) => {
     if (!users.includes(userName)) {
       setUsers([...users, userName]);
@@ -82,6 +80,7 @@ const App = () => {
     setCurrentPage('addAttempt');
   };
 
+  // Seleccionar usuari existent
   const handleSelectUser = (userName) => {
     if (users.includes(userName)) {
       setSelectedUser(userName);
@@ -89,7 +88,7 @@ const App = () => {
     }
   };
 
-  // Add a new attempt for the selected user_name
+  // Afegir un nou intent a Supabase
   const handleAddAttempt = async (newAttempt) => {
     if (!selectedUser) return;
 
@@ -113,7 +112,7 @@ const App = () => {
     setCurrentPage('viewAttempts');
   };
 
-  // Edit attempt score
+  // Editar score d’un intent a Supabase
   const handleEditAttempt = async (id, newScore) => {
     const { data, error } = await supabase
       .from('bread_attempts')
@@ -127,9 +126,7 @@ const App = () => {
       return;
     }
 
-    setAttempts(attempts.map(attempt =>
-      attempt.id === id ? data : attempt
-    ));
+    setAttempts(attempts.map(attempt => attempt.id === id ? data : attempt));
   };
 
   const handleBackToUserSelection = () => {
@@ -138,15 +135,15 @@ const App = () => {
   };
 
   const bestAttempt = attempts.length > 0
-    ? attempts.reduce((prev, current) => (prev.score > current.score ? prev : current))
+    ? attempts.reduce((prev, curr) => prev.score > curr.score ? prev : curr)
     : null;
 
   const lastAttempt = attempts.length > 0
-    ? attempts.reduce((prev, current) => (new Date(prev.date) > new Date(current.date) ? prev : current))
+    ? attempts.reduce((prev, curr) => new Date(prev.date) > new Date(curr.date) ? prev : curr)
     : null;
 
   if (loadingUsers) {
-    return <div className="text-center p-6">Loading users...</div>;
+    return <div className="text-center p-6">Carregant usuaris...</div>;
   }
 
   return (
@@ -175,7 +172,7 @@ const App = () => {
 
             <main className="min-h-[60vh]">
               {loadingAttempts ? (
-                <div>Loading attempts...</div>
+                <div>Carregant intents...</div>
               ) : (
                 <>
                   {currentPage === 'addAttempt' && (
