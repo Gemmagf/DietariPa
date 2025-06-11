@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import BreadHeader from './components/BreadHeader';
-import BreadAddAttemptForm from './components/BreadAddAttemptForm';
-import BreadViewAttempts from './components/BreadViewAttempts';
-import BreadSummaryTable from './components/BreadSummaryTable';
-import BreadAIRecommendations from './components/BreadAIRecommendations';
-import BreadUserSelector from './components/BreadUserSelector';
-import { supabase } from './supabaseClient';
+import BreadHeader from './components/BreadHeader.jsx';
+import BreadAddAttemptForm from './components/BreadAddAttemptForm.jsx';
+import BreadViewAttempts from './components/BreadViewAttempts.jsx';
+import BreadSummaryTable from './components/BreadSummaryTable.jsx';
+import BreadAIRecommendations from './components/BreadAIRecommendations.jsx';
+import BreadUserSelector from './components/BreadUserSelector.jsx';
+import { supabase } from './supabaseClient.jsx';
 
 const App = () => {
   const [currentPage, setCurrentPage] = useState('userSelection');
