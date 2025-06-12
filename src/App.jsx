@@ -5,7 +5,7 @@ import BreadViewAttempts from './components/BreadViewAttempts';
 import BreadSummaryTable from './components/BreadSummaryTable';
 import BreadAIRecommendations from './components/BreadAIRecommendations';
 import BreadUserSelector from './components/BreadUserSelector'; // Importar el nuevo componente
-import { supabase } from './utils/supabaseClient'// 
+import { getStorage, setStorage, getNextId } from './utils/storage'; // Importar getNextId
 
 const App = () => {
   const [currentPage, setCurrentPage] = useState('userSelection'); // Estado inicial para la selección de usuario
@@ -14,65 +14,42 @@ const App = () => {
   const [selectedUser, setSelectedUser] = useState(null);
 
   useEffect(() => {
-    const fetchUsers = async () => {
-      const { data, error } = await supabase
-        .from('bread_attempts')
-        .select('user_name');
-
-      if (error) {
-        console.error('Error loading users from Supabase:', error);
-        return;
+    const storedUsers = getStorage('breadUsers', []);
+    setUsers(storedUsers);
+    const storedSelectedUserId = getStorage('selectedBreadUserId', null);
+    if (storedSelectedUserId) {
+      const user = storedUsers.find(u => u.id === storedSelectedUserId);
+      if (user) {
+        setSelectedUser(user);
+        setCurrentPage('addAttempt'); // Si hay usuario seleccionado, ir a añadir intento
       }
-
-      const uniqueUserNames = [...new Set(data.map(item => item.user_name))];
-      const usersList = uniqueUserNames.map((name, index) => ({ id: index + 1, name }));
-      setUsers(usersList);
-
-      // Recuperar usuari anterior guardat al navegador (opcional)
-      const lastUserName = localStorage.getItem('selectedBreadUser');
-      if (lastUserName) {
-        const user = usersList.find(u => u.name === lastUserName);
-        if (user) {
-          setSelectedUser(user);
-          setCurrentPage('addAttempt');
-        }
-      }
-    };
-
-    fetchUsers();
+    }
   }, []);
-  
 
   useEffect(() => {
-    if (!selectedUser) {
+    if (selectedUser) {
+      const storedAttempts = getStorage(`breadAttempts_user_${selectedUser.id}`, []);
+      setAttempts(storedAttempts);
+      setStorage('selectedBreadUserId', selectedUser.id);
+    } else {
       setAttempts([]);
-      return;
+      setStorage('selectedBreadUserId', null);
     }
-
-    const fetchAttempts = async () => {
-      const { data, error } = await supabase
-        .from('bread_attempts')
-        .select('*')
-        .eq('user_name', selectedUser.name)
-        .order('date', { ascending: true });
-
-      if (error) {
-        console.error('Error loading attempts from Supabase:', error);
-        return;
-      }
-
-      setAttempts(data);
-      localStorage.setItem('selectedBreadUser', selectedUser.name);
-    };
-
-    fetchAttempts();
   }, [selectedUser]);
-  
+
+  useEffect(() => {
+    if (selectedUser) {
+      setStorage(`breadAttempts_user_${selectedUser.id}`, attempts);
+    }
+  }, [attempts, selectedUser]);
+
+  useEffect(() => {
+    setStorage('breadUsers', users);
+  }, [users]);
+
   const handleAddUser = (userName) => {
-    const newUser = {
-      id: users.length + 1,
-      name: userName
-    };
+    const newUserId = getNextId(users);
+    const newUser = { id: newUserId, name: userName };
     setUsers([...users, newUser]);
     setSelectedUser(newUser);
     setCurrentPage('addAttempt');
@@ -84,40 +61,15 @@ const App = () => {
     setCurrentPage('addAttempt');
   };
 
-  const handleAddAttempt = async (newAttempt) => {
-    const attemptToInsert = {
-      ...newAttempt,
-      user_name: selectedUser.name,
-    };
-
-    const { data, error } = await supabase
-      .from('bread_attempts')
-      .insert([attemptToInsert])
-      .select();
-
-    if (error) {
-      console.error('Error saving attempt:', error);
-      return;
-    }
-
-    setAttempts([...attempts, data[0]]);
+  const handleAddAttempt = (newAttempt) => {
+    const id = getNextId(attempts);
+    setAttempts([...attempts, { ...newAttempt, id, userId: selectedUser.id }]);
     setCurrentPage('viewAttempts');
   };
 
-  const handleEditAttempt = async (id, newScore) => {
-    const { data, error } = await supabase
-      .from('bread_attempts')
-      .update({ score: newScore })
-      .eq('id', id)
-      .select();
-
-    if (error) {
-      console.error('Error updating attempt score:', error);
-      return;
-    }
-
+  const handleEditAttempt = (id, newScore) => {
     setAttempts(attempts.map(attempt =>
-      attempt.id === id ? data[0] : attempt
+      attempt.id === id ? { ...attempt, score: newScore } : attempt
     ));
   };
 
