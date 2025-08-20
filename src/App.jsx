@@ -115,6 +115,18 @@ const defaultAttempts = [
     result: 'Molla airejada i crosta cruixent. Molt satisfactori.',
     score: 5,
   },
+  {
+  id: 11,
+  userId: 2,
+  date: '2025-03-05',
+  title: 'Tercer Intent - Pa integral',
+  recipe: '200 g farina integral, 130 g aigua, 4 g sal, 15 g massa mare',
+  process: 'Fermentació llarga 12h, forn preescalfat',
+  result: 'Bona molla i crosta cruixent',
+  score: 4
+}
+
+
 ];
 
 const App = () => {

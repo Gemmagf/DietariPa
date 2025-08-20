@@ -4,6 +4,7 @@ import BreadStarRating from './BreadStarRating';
 
 const BreadViewAttempts = ({ attempts, onEditAttempt }) => {
   const sortedAttempts = [...attempts].sort((a, b) => new Date(b.date) - new Date(a.date));
+
   const bestAttempt = attempts.length > 0
     ? attempts.reduce((prev, current) => (prev.score > current.score ? prev : current))
     : null;
@@ -14,13 +15,14 @@ const BreadViewAttempts = ({ attempts, onEditAttempt }) => {
 
       {bestAttempt && (
         <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 p-4 rounded-lg shadow-md mb-6">
-          <h3 className="font-bold text-xl mb-2">🏆 Millor Pa: {bestAttempt.name}</h3>
+          <h3 className="font-bold text-xl mb-2">🏆 Millor Pa</h3>
           <div className="flex items-center mb-2">
             <BreadStarRating rating={bestAttempt.score} editable={false} />
             <span className="ml-2 text-lg">({bestAttempt.date})</span>
           </div>
-          <p className="text-sm">Ingredients: {bestAttempt.ingredients}</p>
-          <p className="text-sm">Tècniques: {bestAttempt.techniques}</p>
+          <p className="text-sm"><strong>Ingredients:</strong> {bestAttempt.recipe}</p>
+          <p className="text-sm"><strong>Tècniques:</strong> {bestAttempt.process}</p>
+          <p className="text-sm"><strong>Resultat:</strong> {bestAttempt.result}</p>
         </div>
       )}
 
