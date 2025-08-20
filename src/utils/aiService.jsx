@@ -1,20 +1,36 @@
-// En un entorno real, esta función haría una llamada a una API de Hugging Face.
-// Para esta demo, simularemos una respuesta.
+export async function getAIRecommendation(prompt) {
+  const apiKey = process.env.REACT_APP_GOOGLE_API_KEY;
+  const url =
+    "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
 
-export const getRecommendations = async (bestRecipe, lastRecipe) => {
-  console.log("Enviando a Hugging Face (simulado):", { bestRecipe, lastRecipe });
+  if (!apiKey) {
+    console.error("❌ No s'ha trobat la clau de l'API. Revisa el fitxer .env");
+    return null;
+  }
 
-  // Simulación de un retraso de red
-  await new Promise(resolve => setTimeout(resolve, 1500));
+  try {
+    const response = await fetch(`${url}?key=${apiKey}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+      }),
+    });
 
-  // Simulación de la respuesta de la IA
-  const recommendations = [
-    "Considera ajustar la hidratación de la masa en un 5% para una miga más abierta.",
-    "Prueba a usar una fermentación en bloque más larga a temperatura ambiente antes de la fermentación en frío.",
-    "Experimenta con diferentes tipos de harina, como la harina de centeno, para variar el sabor y la textura.",
-    "Asegúrate de que tu horno esté bien precalentado y usa una piedra de hornear para una mejor corteza.",
-    "Para una corteza más crujiente, rocía agua en el horno al inicio de la cocción."
-  ];
+    if (!response.ok) {
+      console.error("❌ Error HTTP:", response.status, response.statusText);
+      return null;
+    }
 
-  return recommendations;
-};
+    const data = await response.json();
+    console.log("📥 Gemini response:", data);
+
+    // Retorna el text generat (si existeix)
+    return data?.candidates?.[0]?.content?.parts?.[0]?.text || null;
+  } catch (err) {
+    console.error("❌ Error cridant la IA:", err);
+    return null;
+  }
+}
